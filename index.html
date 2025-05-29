@@ -2,13 +2,289 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>I Love You</title>
-  <link rel="stylesheet" href="style.css"/>
+  <title>I ❤ You</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(-45deg, #ff416c, #ff4b2b, #1e1e1e, #0a0a0a);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #music-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 0, 0, 0.8);
+      border: none;
+      border-radius: 50px;
+      padding: 12px 20px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 10;
+      transition: background 0.3s;
+    }
+
+    #music-btn:hover {
+      background: rgba(255, 0, 0, 1);
+    }
+
+    #song-info {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      color: #fff;
+      background: rgba(0,0,0,0.4);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-family: sans-serif;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+    }
+
+
+    #intro-heart {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1);
+      font-size: 100px;
+      color: white;
+      animation: pulse 2s ease-out forwards;
+      z-index: 20;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 600px) {
+      #music-btn {
+        top: 10px;
+        right: 10px;
+        font-size: 14px;
+        padding: 8px 16px;
+      }
+
+      #song-info {
+        font-size: 12px;
+        padding: 6px 12px;
+      }
+
+
+
+      #intro-heart {
+        font-size: 70px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="container" id="heartContainer"></div>
-  <h1 class="message">I ❤ You</h1>
-  <script src="script.js"></script>
+  <div id="intro-heart">❤️</div>
+  <canvas id="canvas"></canvas>
+
+  <audio id="bg-music" loop autoplay>
+    <source src="letmeloveyou.mp3" type="audio/mpeg" />
+    Tu navegador no soporta audio.
+  </audio>
+
+  <button id="music-btn">Pause 💔</button>
+  <div id="song-info">🎶 Let Me Love You - DJ Snake ft. Justin Bieber</div>
+
+  <script>
+    const introHeart = document.getElementById("intro-heart");
+    setTimeout(() => {
+      introHeart.style.display = "none";
+    }, 2500);
+  </script>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      updateHearts();
+    });
+
+    const messages = ["Martuu", "Te Extraño",];
+    let currentMessageIndex = 0;
+
+    const offCanvas = document.createElement('canvas');
+    const offCtx = offCanvas.getContext('2d');
+    offCanvas.width = canvas.width;
+    offCanvas.height = canvas.height;
+
+    let hearts = [];
+
+    function updateHearts() {
+      offCtx.clearRect(0, 0, offCanvas.width, offCanvas.height);
+      offCtx.fillStyle = 'white';
+      offCtx.font = 'bold 120px Arial';
+      offCtx.textAlign = 'center';
+      offCtx.textBaseline = 'middle';
+      offCtx.fillText(messages[currentMessageIndex], canvas.width / 2, canvas.height / 2);
+
+      const imageData = offCtx.getImageData(0, 0, canvas.width, canvas.height).data;
+      hearts = [];
+      for (let y = 0; y < canvas.height; y += 8) {
+        for (let x = 0; x < canvas.width; x += 8) {
+          const index = (y * canvas.width + x) * 4;
+          if (imageData[index + 3] > 128) {
+            hearts.push({ x, y, size: Math.random() * 3 + 2 });
+          }
+        }
+      }
+    }
+
+    updateHearts();
+    setInterval(() => {
+      currentMessageIndex = (currentMessageIndex + 1) % messages.length;
+      updateHearts();
+    }, 5000);
+
+    function drawHeart(x, y, size, rotation = 0, color = 'white') {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(0, -size, -size, -size, -size, 0);
+      ctx.bezierCurveTo(-size, size, 0, size * 1.5, 0, size * 2);
+      ctx.bezierCurveTo(0, size * 1.5, size, size, size, 0);
+      ctx.bezierCurveTo(size, -size, 0, -size, 0, 0);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const particles = [];
+    for (let i = 0; i < 100; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 2 + 1,
+        speedX: (Math.random() - 0.5) * 0.5,
+        speedY: (Math.random() - 0.5) * 0.5,
+        alpha: Math.random() * 0.5 + 0.2,
+      });
+    }
+
+    function drawParticles() {
+      ctx.save();
+      ctx.fillStyle = 'white';
+      particles.forEach(p => {
+        ctx.globalAlpha = p.alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        p.x += p.speedX;
+        p.y += p.speedY;
+        if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+      });
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    let explosionHearts = [];
+
+    canvas.addEventListener("click", e => {
+      const count = 20;
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = Math.random() * 4 + 2;
+        explosionHearts.push({
+          x: e.clientX,
+          y: e.clientY,
+          size: Math.random() * 3 + 2,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 100,
+          rotation: Math.random() * Math.PI,
+        });
+      }
+    });
+
+    function updateExplosionHearts() {
+      explosionHearts.forEach(h => {
+        h.x += h.vx;
+        h.y += h.vy;
+        h.life -= 1;
+        h.rotation += 0.1;
+      });
+      explosionHearts = explosionHearts.filter(h => h.life > 0);
+    }
+
+    function drawExplosionHearts() {
+      explosionHearts.forEach(h => {
+        const alpha = Math.max(h.life / 100, 0);
+        ctx.globalAlpha = alpha;
+        drawHeart(h.x, h.y, h.size, h.rotation, 'pink');
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawParticles();
+      hearts.forEach(h => {
+        const float = Math.sin(Date.now() * 0.002 + h.x * 0.01) * 2;
+        drawHeart(h.x, h.y + float, h.size);
+      });
+      updateExplosionHearts();
+      drawExplosionHearts();
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    const audio = document.getElementById("bg-music");
+    const btn = document.getElementById("music-btn");
+
+    btn.addEventListener("click", () => {
+      if (audio.paused) {
+        audio.play();
+        btn.textContent = "Pause 💔";
+      } else {
+        audio.pause();
+        btn.textContent = "Play ❤️";
+      }
+    });
+  </script>
 </body>
 </html>
